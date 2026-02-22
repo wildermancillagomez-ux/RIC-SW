@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RIC-SW | Sistema de Gestión Avanzado</title>
+    <title>RIC-SW | Sistema Integral Sinchi Wayra</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -22,20 +22,25 @@
         .btn-gris { background: var(--gris); color: white; }
         .btn-verde { background: var(--verde); color: white; }
         
+        /* Registro de Fotos */
         .grid-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .foto-box { background: #f9f9f9; padding: 10px; border: 1px dashed #bbb; border-radius: 8px; text-align: center; font-size: 12px; }
-        .preview-img { width: 100%; height: 80px; object-fit: cover; display: none; margin-top: 5px; border-radius: 4px; }
+        .foto-box { background: #f9f9f9; padding: 10px; border: 1px dashed #bbb; border-radius: 8px; text-align: center; font-size: 11px; cursor: pointer; }
+        .preview-img { width: 100%; height: 70px; object-fit: cover; display: none; margin-top: 5px; border-radius: 4px; }
         
-        .pregunta-box { background: #fefefe; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid var(--rojo); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .pregunta-box p { font-weight: bold; margin-bottom: 10px; font-size: 14px; }
+        /* Menú y Tablas */
+        .modulo-item { background: white; border: 2px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: var(--rojo); color: white; }
         
+        /* Firma */
         #canvas-firma { border: 2px dashed #999; background: #fff; width: 100%; border-radius: 8px; touch-action: none; }
     </style>
 </head>
 <body>
 
 <div id="p-registro" class="card">
-    <h2>RIC-SW: Registro de Ingreso</h2>
+    <h2>RIC-SW: Registro</h2>
     <input type="text" id="nombre" placeholder="Nombre Completo">
     <input type="text" id="ci" placeholder="CI con Extensión">
     <select id="operacion">
@@ -44,21 +49,22 @@
         <option value="Reserva">Reserva</option>
     </select>
     <select id="area">
-        <option value="">Seleccione Área de Trabajo...</option>
-        <option value="Mina">Interior Mina (Examen Explosivos/Gases)</option>
-        <option value="Superficie">Superficie / Planta (Examen Químicos/Altura)</option>
+        <option value="">Seleccione Área de Destino...</option>
+        <option value="Mina">Interior Mina</option>
+        <option value="Superficie">Superficie / Planta</option>
     </select>
 
-    <p style="font-weight:bold; font-size:13px; margin-top:10px;">Documentación Obligatoria:</p>
+    <p style="font-weight:bold; font-size:12px; margin-top:10px;">Documentación (Toque para capturar):</p>
     <div class="grid-fotos">
-        <div class="foto-box" onclick="triggerCam('f1')">🪪 CI Anverso<input type="file" id="f1" accept="image/*" capture="camera" class="hidden" onchange="procFoto(this,'v1','fotoCIA')"><img id="v1" class="preview-img"></div>
-        <div class="foto-box" onclick="triggerCam('f2')">🪪 CI Reverso<input type="file" id="f2" accept="image/*" capture="camera" class="hidden" onchange="procFoto(this,'v2','fotoCIR')"><img id="v2" class="preview-img"></div>
-        <div class="foto-box" onclick="triggerCam('f3')">📄 Seguro Vida<input type="file" id="f3" accept="image/*" capture="camera" class="hidden" onchange="procFoto(this,'v3','fotoSV')"><img id="v3" class="preview-img"></div>
-        <div class="foto-box" onclick="triggerCam('f4')">🏥 Seguro Salud (Opc)<input type="file" id="f4" accept="image/*" capture="camera" class="hidden" onchange="procFoto(this,'v4','fotoSS')"><img id="v4" class="preview-img"></div>
+        <div class="foto-box" onclick="trigger('f1')">CI Anverso *<input type="file" id="f1" accept="image/*" capture="camera" class="hidden" onchange="loadImg(this,'v1','fAnv')"><img id="v1" class="preview-img"></div>
+        <div class="foto-box" onclick="trigger('f2')">CI Reverso *<input type="file" id="f2" accept="image/*" capture="camera" class="hidden" onchange="loadImg(this,'v2','fRev')"><img id="v2" class="preview-img"></div>
+        <div class="foto-box" onclick="trigger('f3')">Seguro Vida *<input type="file" id="f3" accept="image/*" capture="camera" class="hidden" onchange="loadImg(this,'v3','fSegV')"><img id="v3" class="preview-img"></div>
+        <div class="foto-box" onclick="trigger('f4')">Seguro Salud (Opc)<input type="file" id="f4" accept="image/*" capture="camera" class="hidden" onchange="loadImg(this,'v4','fSegS')"><img id="v4" class="preview-img"></div>
     </div>
     
     <canvas id="resizeCanvas" class="hidden"></canvas>
-    <button class="btn btn-rojo" onclick="iniciarSistema()">REGISTRAR E INICIAR EXÁMENES</button>
+    <button class="btn btn-rojo" onclick="iniciarSesion()">INGRESAR Y EVALUAR</button>
+    <p style="text-align:center;"><a href="#" onclick="mostrarAdmin()" style="color:#bbb; font-size:10px; text-decoration:none;">Panel Supervisor</a></p>
 </div>
 
 <div id="p-menu" class="card hidden">
@@ -66,21 +72,38 @@
     <p id="labelUser" style="text-align:center; font-weight:bold;"></p>
     <div id="listaCursos"></div>
     
-    <div id="areaFirma" class="hidden" style="margin-top:20px; text-align:center;">
-        <p>Firma del Trabajador:</p>
-        <canvas id="canvas-firma" width="400" height="150"></canvas>
-        <button class="btn btn-gris" onclick="limpiarFirma()">LIMPIAR</button>
-        <button class="btn btn-verde" onclick="generarPDF()">GENERAR CERTIFICADO FINAL</button>
+    <div id="areaFinal" class="hidden" style="margin-top:20px; text-align:center;">
+        <hr>
+        <p style="font-weight:bold; color:var(--rojo);">Firma del Trabajador:</p>
+        <canvas id="canvas-firma" width="450" height="150"></canvas>
+        <button class="btn btn-gris" onclick="clearFirma()">LIMPIAR FIRMA</button>
+        <button class="btn btn-verde" onclick="generarPDF()">DESCARGAR CERTIFICADO OFICIAL</button>
+    </div>
+</div>
+
+<div id="p-admin" class="card hidden" style="max-width: 95%;">
+    <h2>Panel de Control - Wilder</h2>
+    <input type="text" id="buscador" onkeyup="filtrarTab()" placeholder="🔍 Buscar por nombre o CI..." style="margin-bottom:10px;">
+    <button class="btn btn-gris" onclick="location.reload()">CERRAR PANEL</button>
+    <button class="btn btn-verde" onclick="exportExcel()">EXPORTAR EXCEL</button>
+    <div style="overflow-x:auto;">
+        <table id="tablaAdmin">
+            <thead>
+                <tr><th>Nombre</th><th>CI</th><th>Área</th><th>Sede</th><th>Inducción</th><th>Riesgo</th><th>Fecha</th></tr>
+            </thead>
+            <tbody id="bodyAdmin"></tbody>
+        </table>
     </div>
 </div>
 
 <div id="p-examen" class="card hidden">
-    <h2 id="tituloExamen"></h2>
-    <div id="preguntasContenedor"></div>
-    <button class="btn btn-rojo" onclick="procesarResultado()">GUARDAR RESPUESTAS</button>
+    <h2 id="exTitulo"></h2>
+    <div id="exContenido"></div>
+    <button class="btn btn-rojo" onclick="finalizarExamen()">GUARDAR EVALUACIÓN</button>
 </div>
 
 <script>
+    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyCp7opkKQzw0pf3VbQcOO7295Kz1E1zDTk",
         authDomain: "ric-sw.firebaseapp.com",
@@ -93,33 +116,21 @@
     const db = firebase.firestore();
 
     let userDocId = "";
-    let fotos = { fotoCIA: "", fotoCIR: "", fotoSV: "", fotoSS: "" };
-    let areaSeleccionada = "";
-    let examenActual = "";
-    let notasFinales = {};
+    let areaSel = "";
+    let cursoAct = "";
+    let fotosData = {};
+    let notas = {};
 
-    const BANCO_PREGUNTAS = {
-        "Induccion": [
-            {p: "¿Prioridad #1 de Sinchi Wayra?", o: ["Seguridad", "Producción", "Costos"], c: 0},
-            {p: "¿Significado de Sinchi Wayra?", o: ["Viento Fuerte", "Oro Puro", "Montaña Alta"], c: 0},
-            {p: "¿Qué hacer ante un accidente?", o: ["Reportar de inmediato", "Seguir trabajando", "Esperar al cambio de turno"], c: 0},
-            // ... (Se completarían hasta 20 preguntas aquí)
-        ],
-        "Mina": [
-            {p: "¿Primer paso ante presencia de gases?", o: ["Evacuar a zona ventilada", "Ponerse la máscara y seguir", "Avisar por radio y esperar"], c: 0},
-            {p: "¿Distancia mínima para manipulación de explosivos?", o: ["50 metros", "10 metros", "100 metros"], c: 0},
-            // ... (Se completarían hasta 20 preguntas aquí)
-        ],
-        "Superficie": [
-            {p: "¿Altura para uso obligatorio de arnés?", o: ["1.80m", "1.50m", "2.00m"], c: 0},
-            {p: "¿Qué significa la 'A' en el sistema ABCD?", o: ["Anclaje", "Arnés", "Avisar"], c: 0},
-            // ... (Se completarían hasta 20 preguntas aquí)
-        ]
+    // BANCO DE PREGUNTAS (Estructura para 20 preguntas)
+    const CUESTIONARIOS = {
+        "Induccion": Array(20).fill({p: "¿Cuál es la prioridad #1?", o: ["Seguridad","Producción","Costos"], c: 0}),
+        "Mina": Array(20).fill({p: "¿Qué hacer ante gases?", o: ["Evacuar","Quedarse","Dormir"], c: 0}),
+        "Superficie": Array(20).fill({p: "¿Altura para arnés?", o: ["1.80m","1.00m","2.50m"], c: 0})
     };
 
-    function triggerCam(id) { document.getElementById(id).click(); }
+    function trigger(id) { document.getElementById(id).click(); }
 
-    function procFoto(input, preId, llave) {
+    function loadImg(input, preId, key) {
         const reader = new FileReader();
         reader.onload = e => {
             const img = new Image();
@@ -128,8 +139,8 @@
                 const ctx = canvas.getContext('2d');
                 canvas.width = 400; canvas.height = (img.height * 400) / img.width;
                 ctx.drawImage(img, 0, 0, 400, canvas.height);
-                fotos[llave] = canvas.toDataURL('image/jpeg', 0.6);
-                document.getElementById(preId).src = fotos[llave];
+                fotosData[key] = canvas.toDataURL('image/jpeg', 0.6);
+                document.getElementById(preId).src = fotosData[key];
                 document.getElementById(preId).style.display = 'block';
             };
             img.src = e.target.result;
@@ -137,97 +148,116 @@
         reader.readAsDataURL(input.files[0]);
     }
 
-    async function iniciarSistema() {
+    async function iniciarSesion() {
         const nom = document.getElementById('nombre').value;
         const ci = document.getElementById('ci').value;
-        areaSeleccionada = document.getElementById('area').value;
-        
-        if(!nom || !ci || !areaSeleccionada || !fotos.fotoCIA || !fotos.fotoCIR || !fotos.fotoSV) return alert("Faltan datos u fotos obligatorias.");
+        areaSel = document.getElementById('area').value;
+        if(!nom || !ci || !areaSel || !fotosData.fAnv || !fotosData.fRev || !fotosData.fSegV) return alert("Faltan datos o documentos.");
 
         const res = await db.collection("trabajadores").add({
-            nombre: nom, ci, area: areaSeleccionada, fotos, fecha: new Date().toLocaleString()
+            nombre: nom, ci, area: areaSel, sede: document.getElementById('operacion').value,
+            fotos: fotosData, fecha: new Date().toLocaleString()
         });
         userDocId = res.id;
-        document.getElementById('labelUser').innerText = nom + " - Área: " + areaSeleccionada;
-        renderizarMenu();
+        document.getElementById('labelUser').innerText = nom + " (" + areaSel + ")";
+        renderMenu();
         document.getElementById('p-registro').classList.add('hidden');
         document.getElementById('p-menu').classList.remove('hidden');
     }
 
-    function renderizarMenu() {
+    function renderMenu() {
         const lista = document.getElementById('listaCursos');
-        lista.innerHTML = `<button class="btn btn-gris" onclick="iniciarExamen('Induccion')">1. Inducción General ${notasFinales.Induccion ? '✅' : '⏳'}</button>`;
+        const riesgoNom = areaSel === "Mina" ? "Seguridad Interior Mina" : "Riesgos Superficie";
+        const riesgoKey = areaSel === "Mina" ? "Mina" : "Superficie";
         
-        if(areaSeleccionada === "Mina") {
-            lista.innerHTML += `<button class="btn btn-gris" onclick="iniciarExamen('Mina')">2. Seguridad en Interior Mina ${notasFinales.Mina ? '✅' : '⏳'}</button>`;
-        } else {
-            lista.innerHTML += `<button class="btn btn-gris" onclick="iniciarExamen('Superficie')">2. Riesgos en Superficie/Planta ${notasFinales.Superficie ? '✅' : '⏳'}</button>`;
-        }
+        lista.innerHTML = `
+            <div class="modulo-item">1. Inducción General <span>${notas.Induccion ? '✅ '+notas.Induccion : '<button onclick="startEx(\'Induccion\')">INICIAR</button>'}</span></div>
+            <div class="modulo-item">2. ${riesgoNom} <span>${notas[riesgoKey] ? '✅ '+notas[riesgoKey] : '<button onclick="startEx(\''+riesgoKey+'\')">INICIAR</button>'}</span></div>
+        `;
+        if(notas.Induccion && notas[riesgoKey]) document.getElementById('areaFinal').classList.remove('hidden');
     }
 
-    function iniciarExamen(tipo) {
-        examenActual = tipo;
-        document.getElementById('tituloExamen').innerText = "Examen: " + tipo;
-        const cont = document.getElementById('preguntasContenedor');
-        cont.innerHTML = "";
-        
-        BANCO_PREGUNTAS[tipo].forEach((pre, i) => {
-            let opciones = pre.o.map((opt, j) => `<label><input type="radio" name="pre${i}" value="${j === pre.c ? 100 : 0}"> ${opt}</label><br>`).join("");
-            cont.innerHTML += `<div class="pregunta-box"><p>${i+1}. ${pre.p}</p>${opciones}</div>`;
-        });
-
+    function startEx(tipo) {
+        cursoAct = tipo;
+        document.getElementById('exTitulo').innerText = "Evaluación: " + tipo;
+        const cont = document.getElementById('exContenido');
+        cont.innerHTML = CUESTIONARIOS[tipo].map((q, i) => `
+            <div class="pregunta-box">
+                <p>${i+1}. ${q.p}</p>
+                ${q.o.map((opt, j) => `<label><input type="radio" name="q${i}" value="${j==q.c?100:0}"> ${opt}</label><br>`).join("")}
+            </div>
+        `).join("");
         document.getElementById('p-menu').classList.add('hidden');
         document.getElementById('p-examen').classList.remove('hidden');
+        window.scrollTo(0,0);
     }
 
-    async function procesarResultado() {
-        const totalPreguntas = BANCO_PREGUNTAS[examenActual].length;
+    async function finalizarExamen() {
+        const qCount = CUESTIONARIOS[cursoAct].length;
         let suma = 0;
-        for(let i=0; i<totalPreguntas; i++) {
-            const sel = document.querySelector(`input[name="pre${i}"]:checked`);
-            if(!sel) return alert("Responde todas las preguntas.");
+        for(let i=0; i<qCount; i++){
+            const sel = document.querySelector(`input[name="q${i}"]:checked`);
+            if(!sel) return alert("Complete todas las preguntas.");
             suma += parseInt(sel.value);
         }
-        const nota = Math.round(suma / totalPreguntas);
-        notasFinales[examenActual] = nota;
-        
-        await db.collection("trabajadores").doc(userDocId).update({ ["nota_" + examenActual]: nota });
-        
+        const final = Math.round(suma / qCount);
+        notas[cursoAct] = final;
+        await db.collection("trabajadores").doc(userDocId).update({ ["nota_"+cursoAct]: final });
         document.getElementById('p-examen').classList.add('hidden');
         document.getElementById('p-menu').classList.remove('hidden');
-        renderizarMenu();
-        
-        if(Object.keys(notasFinales).length >= 2) document.getElementById('areaFirma').classList.remove('hidden');
+        renderMenu();
     }
 
-    // Firma Canvas (Lógica estándar previa)
+    // FIRMA Y ADMIN (Lógica previa integrada)
     const canvasF = document.getElementById('canvas-firma');
     const ctxF = canvasF.getContext('2d');
     let dib = false;
-    function getP(e) { const r = canvasF.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; return { x: cx - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top }; }
-    canvasF.addEventListener('touchstart', (e) => { e.preventDefault(); dib=true; ctxF.beginPath(); let p=getP(e); ctxF.moveTo(p.x, p.y); });
-    canvasF.addEventListener('touchmove', (e) => { e.preventDefault(); if(!dib) return; let p=getP(e); ctxF.lineTo(p.x, p.y); ctxF.stroke(); });
+    canvasF.addEventListener('touchstart', (e) => { e.preventDefault(); dib=true; ctxF.beginPath(); const r=canvasF.getBoundingClientRect(); ctxF.moveTo(e.touches[0].clientX-r.left, e.touches[0].clientY-r.top); });
+    canvasF.addEventListener('touchmove', (e) => { e.preventDefault(); if(!dib) return; const r=canvasF.getBoundingClientRect(); ctxF.lineTo(e.touches[0].clientX-r.left, e.touches[0].clientY-r.top); ctxF.stroke(); });
     canvasF.addEventListener('touchend', () => dib=false);
-    function limpiarFirma() { ctxF.clearRect(0,0,canvasF.width, canvasF.height); }
+    function clearFirma() { ctxF.clearRect(0,0,canvasF.width,canvasF.height); }
+
+    async function mostrarAdmin() {
+        if(prompt("Clave:") !== "1234") return;
+        document.getElementById('p-registro').classList.add('hidden');
+        document.getElementById('p-admin').classList.remove('hidden');
+        const snap = await db.collection("trabajadores").orderBy("fecha","desc").get();
+        const body = document.getElementById('bodyAdmin');
+        body.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            body.innerHTML += `<tr><td>${d.nombre}</td><td>${d.ci}</td><td>${d.area}</td><td>${d.sede}</td><td>${d.nota_Induccion||0}</td><td>${d.nota_Mina||d.nota_Superficie||0}</td><td>${d.fecha}</td></tr>`;
+        });
+    }
+
+    function filtrarTab() {
+        const val = document.getElementById('buscador').value.toUpperCase();
+        const filas = document.getElementById('bodyAdmin').getElementsByTagName('tr');
+        for(let f of filas) f.style.display = f.innerText.toUpperCase().includes(val) ? "" : "none";
+    }
 
     function generarPDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.setFontSize(20); doc.text("CERTIFICADO DE CAPACITACIÓN RIC-SW", 105, 20, {align:"center"});
-        doc.setFontSize(12); doc.text(`Trabajador: ${document.getElementById('nombre').value}`, 20, 40);
-        doc.text(`C.I.: ${document.getElementById('ci').value}`, 20, 50);
-        doc.text(`Área de Ingreso: ${areaSeleccionada}`, 20, 60);
-        
-        let y = 80;
-        for(let curso in notasFinales) {
-            doc.text(`- ${curso}: ${notasFinales[curso]}/100`, 30, y);
-            y += 10;
-        }
-
-        if(fotos.fotoCIA) doc.addImage(fotos.fotoCIA, 'JPEG', 140, 40, 50, 30);
+        doc.setFillColor(183, 28, 28); doc.rect(0,0,210,35,'F');
+        doc.setTextColor(255); doc.text("CERTIFICADO OFICIAL RIC-SW", 105, 20, {align:"center"});
+        doc.setTextColor(0); doc.text(`Trabajador: ${document.getElementById('nombre').value}`, 20, 50);
+        if(fotosData.fAnv) doc.addImage(fotosData.fAnv, 'JPEG', 150, 40, 45, 30);
         const fData = canvasF.toDataURL('image/png');
-        doc.addImage(fData, 'PNG', 40, 180, 50, 25);
-        doc.text("FIRMA DEL TRABAJADOR", 65, 210, {align:"center"});
-        doc.save("Certificado_Oficial_SW.pdf");
+        doc.addImage(fData, 'PNG', 40, 180, 50, 20);
+        doc.save("Certificado_Oficial.pdf");
+    }
+
+    function exportExcel() {
+        let csv = "Nombre,CI,Area,Sede,Induccion,Riesgo,Fecha\n";
+        const filas = document.getElementById('bodyAdmin').getElementsByTagName('tr');
+        for(let f of filas) {
+            let cols = f.getElementsByTagName('td');
+            let row = [];
+            for(let c of cols) row.push(c.innerText);
+            csv += row.join(",") + "\n";
+        }
+        const blob = new Blob([csv], {type:'text/csv'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Reporte_Wilder.csv'; a.click();
     }
 </script>
 </body>
