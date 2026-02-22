@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RIC-SW | Certificación con Firma Digital</title>
+    <title>RIC-SW | Sistema Integral</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -11,84 +11,98 @@
 
     <style>
         :root { --rojo: #b71c1c; --verde: #2e7d32; --gris: #454545; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; touch-action: manipulation; }
-        .card { max-width: 550px; background: white; margin: 20px auto; padding: 25px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-        h2 { color: var(--rojo); text-align: center; border-bottom: 2px solid var(--rojo); padding-bottom: 10px; margin-top: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
+        .card { max-width: 600px; background: white; margin: 20px auto; padding: 25px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        h2 { color: var(--rojo); text-align: center; border-bottom: 2px solid var(--rojo); padding-bottom: 10px; }
         .hidden { display: none; }
         
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-top: 10px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
         .btn-rojo { background: var(--rojo); color: white; }
         .btn-verde { background: var(--verde); color: white; }
         .btn-gris { background: var(--gris); color: white; }
         
-        .modulo { background: white; border: 2px solid #ddd; color: #333; text-align: left; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .pregunta { background: #fafafa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--rojo); }
-        
-        /* Estilos del área de firma */
-        #canvas-firma { border: 2px dashed #999; background: #fff; cursor: crosshair; touch-action: none; width: 100%; border-radius: 8px; }
-        .cont-firma { text-align: center; margin-top: 15px; }
+        .modulo { background: white; border: 2px solid #ddd; text-align: left; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 15px; border-radius: 8px; font-weight: bold; }
+        #canvas-firma { border: 2px dashed #999; background: #fff; width: 100%; border-radius: 8px; touch-action: none; }
+
+        /* Estilos Tabla Admin */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: var(--rojo); color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
 
 <div id="p-registro" class="card">
     <h2>RIC-SW</h2>
-    <p style="text-align:center; color:#666; font-size: 14px;">Certificación Oficial Sinchi Wayra</p>
+    <p style="text-align:center; color:#666;">Inducción y Riesgos Críticos</p>
     <input type="text" id="nombre" placeholder="Nombre Completo">
     <input type="text" id="ci" placeholder="CI (Ej: 1234567 OR)">
     <select id="operacion">
         <option value="Bolivar">Bolívar</option>
         <option value="Porco">Porco</option>
         <option value="Reserva">Reserva</option>
-        <option value="Don Diego">Don Diego</option>
     </select>
-    <button class="btn btn-gris" onclick="document.getElementById('fotoInput').click()">📸 FOTO CARNET (ANVERSO)</button>
+    <button class="btn btn-gris" onclick="document.getElementById('fotoInput').click()">📸 FOTO CARNET</button>
     <input type="file" id="fotoInput" accept="image/*" capture="camera" style="display:none" onchange="previewFoto(this)">
     <img id="imgPre" style="width:100%; display:none; margin-top:10px; border-radius:8px;">
     <button class="btn btn-rojo" onclick="iniciarSesion()">INGRESAR</button>
+    <p style="text-align:center; margin-top:30px;"><a href="#" onclick="verAdmin()" style="color:#ccc; font-size:10px; text-decoration:none;">Panel Control</a></p>
 </div>
 
 <div id="p-menu" class="card hidden">
     <h2>Mi Progreso</h2>
     <p id="infoUser" style="text-align:center; font-weight:bold;"></p>
-    <hr>
     <button class="btn modulo" onclick="abrirModulo('p-ind')">1. Inducción General <span id="s-ind">⏳</span></button>
     <button class="btn modulo" onclick="abrirModulo('p-alt')">2. Trabajos en Altura <span id="s-alt">⏳</span></button>
     <button class="btn modulo" onclick="abrirModulo('p-ene')">3. Aislamiento Energía <span id="s-ene">⏳</span></button>
     
-    <div id="areaFirma" class="cont-firma hidden">
-        <p style="font-weight:bold; color:var(--rojo);">Firma aquí para finalizar:</p>
-        <canvas id="canvas-firma" width="450" height="200"></canvas>
-        <button class="btn btn-gris" onclick="limpiarFirma()">BORRAR Y REPETIR</button>
-        <button class="btn btn-verde" onclick="generarPDF()">📥 GENERAR CERTIFICADO PDF</button>
+    <div id="areaFirma" class="hidden" style="text-align:center; margin-top:20px;">
+        <p style="font-weight:bold; color:var(--rojo);">Firma del Trabajador:</p>
+        <canvas id="canvas-firma" width="400" height="150"></canvas>
+        <button class="btn btn-gris" onclick="limpiarFirma()">BORRAR FIRMA</button>
+        <button class="btn btn-verde" onclick="generarPDF()">📥 DESCARGAR CERTIFICADO</button>
+    </div>
+</div>
+
+<div id="p-admin" class="card hidden" style="max-width: 900px;">
+    <h2>Panel de Control - Wilder</h2>
+    <button class="btn btn-gris" onclick="location.reload()">VOLVER AL REGISTRO</button>
+    <div style="overflow-x:auto;">
+        <table id="tablaReporte">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>CI</th>
+                    <th>Sede</th>
+                    <th>Inducción</th>
+                    <th>Altura</th>
+                    <th>Energía</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
     </div>
 </div>
 
 <div id="p-ind" class="card hidden">
     <h2>Examen Inducción</h2>
-    <div class="pregunta"><p>¿Prioridad #1 de Sinchi Wayra?</p>
-        <label><input type="radio" name="i1" value="100"> Seguridad</label>
-        <label><input type="radio" name="i1" value="0"> Producción</label>
-    </div>
+    <p>¿Prioridad de Seguridad?</p>
+    <label><input type="radio" name="i1" value="100"> Prioridad #1</label><br>
     <button class="btn btn-rojo" onclick="calificar('i', 'p-ind', 's-ind', 'notaInd')">GUARDAR</button>
 </div>
-
 <div id="p-alt" class="card hidden">
     <h2>Examen Altura</h2>
-    <div class="pregunta"><p>¿Altura obligatoria de arnés?</p>
-        <label><input type="radio" name="a1" value="100"> 1.80m</label>
-        <label><input type="radio" name="a1" value="0"> 1.50m</label>
-    </div>
+    <p>¿Altura obligatoria?</p>
+    <label><input type="radio" name="a1" value="100"> 1.80m</label><br>
     <button class="btn btn-rojo" onclick="calificar('a', 'p-alt', 's-alt', 'notaAlt')">GUARDAR</button>
 </div>
-
 <div id="p-ene" class="card hidden">
     <h2>Examen Energía</h2>
-    <div class="pregunta"><p>¿Primera Regla de Oro?</p>
-        <label><input type="radio" name="e1" value="100"> Corte visible</label>
-        <label><input type="radio" name="e1" value="0"> Avisar</label>
-    </div>
+    <p>¿Primera regla?</p>
+    <label><input type="radio" name="e1" value="100"> Corte visible</label><br>
     <button class="btn btn-rojo" onclick="calificar('e', 'p-ene', 's-ene', 'notaEne')">GUARDAR</button>
 </div>
 
@@ -105,36 +119,24 @@
     const db = firebase.firestore();
     let userDocId = ""; let fotoBase64 = ""; let datosLocales = { ind: 0, alt: 0, ene: 0 };
 
-    // Lógica del Canvas para Firma
+    // Lógica Firma
     const canvas = document.getElementById('canvas-firma');
     const ctx = canvas.getContext('2d');
     let dibujando = false;
-
-    function obtenerPosicion(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return { x: clientX - rect.left, y: clientY - rect.top };
-    }
-
-    canvas.addEventListener('mousedown', (e) => { dibujando = true; ctx.beginPath(); const p = obtenerPosicion(e); ctx.moveTo(p.x, p.y); });
-    canvas.addEventListener('mousemove', (e) => { if(!dibujando) return; const p = obtenerPosicion(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    function pos(e) { const r = canvas.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - r.left, y: cy - r.top }; }
+    canvas.addEventListener('mousedown', (e) => { dibujando = true; ctx.beginPath(); const p = pos(e); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', (e) => { if(!dibujando) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
     canvas.addEventListener('mouseup', () => dibujando = false);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); dibujando = true; ctx.beginPath(); const p = obtenerPosicion(e); ctx.moveTo(p.x, p.y); });
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if(!dibujando) return; const p = obtenerPosicion(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); dibujando = true; ctx.beginPath(); const p = pos(e); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if(!dibujando) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
     canvas.addEventListener('touchend', () => dibujando = false);
-
     function limpiarFirma() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-    function previewFoto(input) {
-        const reader = new FileReader();
-        reader.onload = e => { fotoBase64 = e.target.result; document.getElementById('imgPre').src = fotoBase64; document.getElementById('imgPre').style.display = 'block'; };
-        reader.readAsDataURL(input.files[0]);
-    }
+    function previewFoto(input) { const reader = new FileReader(); reader.onload = e => { fotoBase64 = e.target.result; document.getElementById('imgPre').src = fotoBase64; document.getElementById('imgPre').style.display = 'block'; }; reader.readAsDataURL(input.files[0]); }
 
     async function iniciarSesion() {
         const nom = document.getElementById('nombre').value; const ci = document.getElementById('ci').value;
-        if(!nom || !ci || !fotoBase64) return alert("Completa los datos y foto.");
+        if(!nom || !ci || !fotoBase64) return alert("Faltan datos.");
         const res = await db.collection("trabajadores").add({ nombre: nom, ci, operacion: document.getElementById('operacion').value, fotoCI: fotoBase64, fecha: new Date().toLocaleString(), notaInd:0, notaAlt:0, notaEne:0 });
         userDocId = res.id; document.getElementById('infoUser').innerText = nom;
         document.getElementById('p-registro').classList.add('hidden'); document.getElementById('p-menu').classList.remove('hidden');
@@ -153,37 +155,31 @@
         if(datosLocales.ind > 0 && datosLocales.alt > 0 && datosLocales.ene > 0) document.getElementById('areaFirma').classList.remove('hidden');
     }
 
+    async function verAdmin() {
+        const pass = prompt("Clave de Administrador:");
+        if(pass !== "1234") return alert("Acceso denegado");
+        document.getElementById('p-registro').classList.add('hidden');
+        document.getElementById('p-admin').classList.remove('hidden');
+        const querySnapshot = await db.collection("trabajadores").orderBy("fecha", "desc").get();
+        const cuerpo = document.getElementById('cuerpoTabla');
+        cuerpo.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+            const d = doc.data();
+            cuerpo.innerHTML += `<tr><td>${d.nombre}</td><td>${d.ci}</td><td>${d.operacion}</td><td>${d.notaInd}</td><td>${d.notaAlt}</td><td>${d.notaEne}</td><td>${d.fecha}</td></tr>`;
+        });
+    }
+
     function generarPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const { jsPDF } = window.jspdf; const doc = new jsPDF();
         const nom = document.getElementById('nombre').value; const ci = document.getElementById('ci').value;
-
-        // Diseño Oficial
-        doc.setFillColor(183, 28, 28); doc.rect(0, 0, 210, 35, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("CERTIFICADO OFICIAL RIC-SW", 105, 18, { align: "center" });
-        doc.setFontSize(10); doc.text("SINCHI WAYRA - GESTIÓN DE SEGURIDAD INDUSTRIAL", 105, 26, { align: "center" });
-
-        doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text("TRABAJADOR HABILITADO:", 20, 50);
-        doc.setFontSize(18); doc.text(nom.toUpperCase(), 20, 60);
-        doc.setFontSize(12); doc.text(`C.I.: ${ci}`, 20, 70);
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 80);
-
-        if(fotoBase64) { doc.setDrawColor(183, 28, 28); doc.rect(145, 45, 45, 45); doc.addImage(fotoBase64, 'JPEG', 147, 47, 41, 41); }
-
-        doc.setFont("helvetica", "bold"); doc.text("RESULTADOS ERC:", 20, 100);
-        doc.setFont("helvetica", "normal");
-        doc.text(`- Inducción: ${datosLocales.ind}/100`, 25, 110);
-        doc.text(`- Altura: ${datosLocales.alt}/100`, 25, 120);
-        doc.text(`- Energía: ${datosLocales.ene}/100`, 25, 130);
-
-        // Insertar Firma del Trabajador
+        doc.setFillColor(183, 28, 28); doc.rect(0, 0, 210, 30, 'F');
+        doc.setTextColor(255, 255, 255); doc.text("CERTIFICADO OFICIAL RIC-SW", 105, 15, { align: "center" });
+        doc.setTextColor(0,0,0); doc.text(`Trabajador: ${nom}`, 20, 50); doc.text(`C.I.: ${ci}`, 20, 60);
+        if(fotoBase64) doc.addImage(fotoBase64, 'JPEG', 150, 40, 40, 30);
         const firmaData = canvas.toDataURL('image/png');
-        doc.addImage(firmaData, 'PNG', 40, 180, 50, 25);
-        doc.line(40, 205, 90, 205); doc.setFontSize(10); doc.text("FIRMA TRABAJADOR", 65, 210, { align: "center" });
-        
-        doc.line(120, 205, 170, 205); doc.text("FIRMA/SELLO SEGURIDAD", 145, 210, { align: "center" });
-
-        doc.save(`Certificado_OFICIAL_SW_${ci}.pdf`);
+        doc.addImage(firmaData, 'PNG', 40, 150, 50, 20);
+        doc.line(40, 170, 90, 170); doc.text("FIRMA TRABAJADOR", 65, 175, { align: "center" });
+        doc.save(`Certificado_${ci}.pdf`);
     }
 </script>
 </body>
