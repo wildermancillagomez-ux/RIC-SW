@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RIC-SW | Sistema de Gestión Integral</title>
+    <title>RIC-SW | Sistema de Gestión Avanzado</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -12,90 +12,73 @@
     <style>
         :root { --rojo: #b71c1c; --verde: #2e7d32; --gris: #454545; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
-        .card { max-width: 600px; background: white; margin: 20px auto; padding: 25px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .card { max-width: 650px; background: white; margin: 15px auto; padding: 25px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         h2 { color: var(--rojo); text-align: center; border-bottom: 2px solid var(--rojo); padding-bottom: 10px; margin-top: 0; }
         .hidden { display: none; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 10px; }
         .btn-rojo { background: var(--rojo); color: white; }
-        .btn-verde { background: var(--verde); color: white; }
         .btn-gris { background: var(--gris); color: white; }
-        .modulo { background: white; border: 2px solid #ddd; text-align: left; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 15px; border-radius: 8px; }
+        .btn-verde { background: var(--verde); color: white; }
+        
+        .grid-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .foto-box { background: #f9f9f9; padding: 10px; border: 1px dashed #bbb; border-radius: 8px; text-align: center; font-size: 12px; }
+        .preview-img { width: 100%; height: 80px; object-fit: cover; display: none; margin-top: 5px; border-radius: 4px; }
+        
+        .pregunta-box { background: #fefefe; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid var(--rojo); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .pregunta-box p { font-weight: bold; margin-bottom: 10px; font-size: 14px; }
+        
         #canvas-firma { border: 2px dashed #999; background: #fff; width: 100%; border-radius: 8px; touch-action: none; }
-        .admin-container { max-width: 98%; background: white; margin: 10px auto; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: var(--rojo); color: white; position: sticky; top: 0; }
-        .status-msg { text-align: center; font-weight: bold; color: var(--rojo); padding: 10px; }
     </style>
 </head>
 <body>
 
 <div id="p-registro" class="card">
-    <h2>RIC-SW</h2>
-    <p style="text-align:center; color:#666; font-size:14px;">Inducciones y Capacitaciones Sinchi Wayra</p>
+    <h2>RIC-SW: Registro de Ingreso</h2>
     <input type="text" id="nombre" placeholder="Nombre Completo">
-    <input type="text" id="ci" placeholder="CI (Ej: 1234567 OR)">
+    <input type="text" id="ci" placeholder="CI con Extensión">
     <select id="operacion">
         <option value="Bolivar">Bolívar</option>
         <option value="Porco">Porco</option>
         <option value="Reserva">Reserva</option>
     </select>
-    <button class="btn btn-gris" onclick="document.getElementById('fotoInput').click()">📸 TOMAR FOTO DEL C.I.</button>
-    <input type="file" id="fotoInput" accept="image/*" capture="camera" style="display:none" onchange="previewFoto(this)">
-    <canvas id="canvasResize" class="hidden"></canvas>
-    <img id="imgPre" style="width:100%; display:none; margin-top:10px; border-radius:8px; border: 1px solid #ddd;">
+    <select id="area">
+        <option value="">Seleccione Área de Trabajo...</option>
+        <option value="Mina">Interior Mina (Examen Explosivos/Gases)</option>
+        <option value="Superficie">Superficie / Planta (Examen Químicos/Altura)</option>
+    </select>
+
+    <p style="font-weight:bold; font-size:13px; margin-top:10px;">Documentación Obligatoria:</p>
+    <div class="grid-fotos">
+        <div class="foto-box" onclick="triggerCam('f1')">🪪 CI Anverso<input type="file" id="f1" accept="image/*" capture="camera" class="hidden" onchange="procFoto(this,'v1','fotoCIA')"><img id="v1" class="preview-img"></div>
+        <div class="foto-box" onclick="triggerCam('f2')">🪪 CI Reverso<input type="file" id="f2" accept="image/*" capture="camera" class="hidden" onchange="procFoto(this,'v2','fotoCIR')"><img id="v2" class="preview-img"></div>
+        <div class="foto-box" onclick="triggerCam('f3')">📄 Seguro Vida<input type="file" id="f3" accept="image/*" capture="camera" class="hidden" onchange="procFoto(this,'v3','fotoSV')"><img id="v3" class="preview-img"></div>
+        <div class="foto-box" onclick="triggerCam('f4')">🏥 Seguro Salud (Opc)<input type="file" id="f4" accept="image/*" capture="camera" class="hidden" onchange="procFoto(this,'v4','fotoSS')"><img id="v4" class="preview-img"></div>
+    </div>
     
-    <div id="msgCarga" class="status-msg hidden">Procesando información...</div>
-    <button id="btnIngresar" class="btn btn-rojo" onclick="iniciarSesion()">INGRESAR AL SISTEMA</button>
-    <p style="text-align:center; margin-top:30px;"><a href="#" onclick="verAdmin()" style="color:#ddd; font-size:11px; text-decoration:none;">Acceso Supervisor</a></p>
+    <canvas id="resizeCanvas" class="hidden"></canvas>
+    <button class="btn btn-rojo" onclick="iniciarSistema()">REGISTRAR E INICIAR EXÁMENES</button>
 </div>
 
 <div id="p-menu" class="card hidden">
-    <h2>Mi Progreso</h2>
-    <p id="infoUser" style="text-align:center; font-weight:bold;"></p>
-    <hr>
-    <button class="btn modulo" onclick="abrirModulo('p-ind')">1. Inducción General <span id="s-ind">⏳</span></button>
-    <button class="btn modulo" onclick="abrirModulo('p-alt')">2. Trabajos en Altura <span id="s-alt">⏳</span></button>
-    <button class="btn modulo" onclick="abrirModulo('p-ene')">3. Aislamiento Energía <span id="s-ene">⏳</span></button>
+    <h2>Plan de Capacitación</h2>
+    <p id="labelUser" style="text-align:center; font-weight:bold;"></p>
+    <div id="listaCursos"></div>
     
-    <div id="areaFirma" class="hidden" style="text-align:center; margin-top:20px;">
-        <p style="font-weight:bold; color:var(--rojo);">Firma aquí para finalizar:</p>
+    <div id="areaFirma" class="hidden" style="margin-top:20px; text-align:center;">
+        <p>Firma del Trabajador:</p>
         <canvas id="canvas-firma" width="400" height="150"></canvas>
-        <button class="btn btn-gris" style="width:48%" onclick="limpiarFirma()">LIMPIAR</button>
-        <button class="btn btn-verde" style="width:48%" onclick="generarPDF()">GENERAR PDF</button>
+        <button class="btn btn-gris" onclick="limpiarFirma()">LIMPIAR</button>
+        <button class="btn btn-verde" onclick="generarPDF()">GENERAR CERTIFICADO FINAL</button>
     </div>
 </div>
 
-<div id="p-admin" class="admin-container hidden">
-    <div style="display:flex; justify-content: space-between; align-items: center;">
-        <h2>Reporte Maestro</h2>
-        <button class="btn btn-verde" style="width:auto; padding:10px 20px;" onclick="exportarExcel()">📥 EXCEL</button>
-    </div>
-    <input type="text" id="buscador" onkeyup="filtrarTabla()" placeholder="🔍 Buscar por CI o Nombre..." style="padding:15px; margin-bottom:10px;">
-    <button class="btn btn-gris" onclick="location.reload()">SALIR DEL PANEL</button>
-    
-    <div style="overflow-x:auto; max-height: 600px;">
-        <table id="tablaReporte">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>CI</th>
-                    <th>Sede</th>
-                    <th>Inducción</th>
-                    <th>Altura</th>
-                    <th>Energía</th>
-                    <th>Fecha</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTabla"></tbody>
-        </table>
-    </div>
+<div id="p-examen" class="card hidden">
+    <h2 id="tituloExamen"></h2>
+    <div id="preguntasContenedor"></div>
+    <button class="btn btn-rojo" onclick="procesarResultado()">GUARDAR RESPUESTAS</button>
 </div>
-
-<div id="p-ind" class="card hidden"><h2>Examen Inducción</h2><button class="btn btn-rojo" onclick="calificar('i', 'p-ind', 's-ind', 'notaInd')">GUARDAR</button></div>
-<div id="p-alt" class="card hidden"><h2>Examen Altura</h2><button class="btn btn-rojo" onclick="calificar('a', 'p-alt', 's-alt', 'notaAlt')">GUARDAR</button></div>
-<div id="p-ene" class="card hidden"><h2>Examen Energía</h2><button class="btn btn-rojo" onclick="calificar('e', 'p-ene', 's-ene', 'notaEne')">GUARDAR</button></div>
 
 <script>
     const firebaseConfig = {
@@ -108,115 +91,143 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    
-    let userDocId = ""; let fotoComprimida = ""; let datosLocales = { ind: 0, alt: 0, ene: 0 };
 
-    // Firma
+    let userDocId = "";
+    let fotos = { fotoCIA: "", fotoCIR: "", fotoSV: "", fotoSS: "" };
+    let areaSeleccionada = "";
+    let examenActual = "";
+    let notasFinales = {};
+
+    const BANCO_PREGUNTAS = {
+        "Induccion": [
+            {p: "¿Prioridad #1 de Sinchi Wayra?", o: ["Seguridad", "Producción", "Costos"], c: 0},
+            {p: "¿Significado de Sinchi Wayra?", o: ["Viento Fuerte", "Oro Puro", "Montaña Alta"], c: 0},
+            {p: "¿Qué hacer ante un accidente?", o: ["Reportar de inmediato", "Seguir trabajando", "Esperar al cambio de turno"], c: 0},
+            // ... (Se completarían hasta 20 preguntas aquí)
+        ],
+        "Mina": [
+            {p: "¿Primer paso ante presencia de gases?", o: ["Evacuar a zona ventilada", "Ponerse la máscara y seguir", "Avisar por radio y esperar"], c: 0},
+            {p: "¿Distancia mínima para manipulación de explosivos?", o: ["50 metros", "10 metros", "100 metros"], c: 0},
+            // ... (Se completarían hasta 20 preguntas aquí)
+        ],
+        "Superficie": [
+            {p: "¿Altura para uso obligatorio de arnés?", o: ["1.80m", "1.50m", "2.00m"], c: 0},
+            {p: "¿Qué significa la 'A' en el sistema ABCD?", o: ["Anclaje", "Arnés", "Avisar"], c: 0},
+            // ... (Se completarían hasta 20 preguntas aquí)
+        ]
+    };
+
+    function triggerCam(id) { document.getElementById(id).click(); }
+
+    function procFoto(input, preId, llave) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.getElementById('resizeCanvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 400; canvas.height = (img.height * 400) / img.width;
+                ctx.drawImage(img, 0, 0, 400, canvas.height);
+                fotos[llave] = canvas.toDataURL('image/jpeg', 0.6);
+                document.getElementById(preId).src = fotos[llave];
+                document.getElementById(preId).style.display = 'block';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    async function iniciarSistema() {
+        const nom = document.getElementById('nombre').value;
+        const ci = document.getElementById('ci').value;
+        areaSeleccionada = document.getElementById('area').value;
+        
+        if(!nom || !ci || !areaSeleccionada || !fotos.fotoCIA || !fotos.fotoCIR || !fotos.fotoSV) return alert("Faltan datos u fotos obligatorias.");
+
+        const res = await db.collection("trabajadores").add({
+            nombre: nom, ci, area: areaSeleccionada, fotos, fecha: new Date().toLocaleString()
+        });
+        userDocId = res.id;
+        document.getElementById('labelUser').innerText = nom + " - Área: " + areaSeleccionada;
+        renderizarMenu();
+        document.getElementById('p-registro').classList.add('hidden');
+        document.getElementById('p-menu').classList.remove('hidden');
+    }
+
+    function renderizarMenu() {
+        const lista = document.getElementById('listaCursos');
+        lista.innerHTML = `<button class="btn btn-gris" onclick="iniciarExamen('Induccion')">1. Inducción General ${notasFinales.Induccion ? '✅' : '⏳'}</button>`;
+        
+        if(areaSeleccionada === "Mina") {
+            lista.innerHTML += `<button class="btn btn-gris" onclick="iniciarExamen('Mina')">2. Seguridad en Interior Mina ${notasFinales.Mina ? '✅' : '⏳'}</button>`;
+        } else {
+            lista.innerHTML += `<button class="btn btn-gris" onclick="iniciarExamen('Superficie')">2. Riesgos en Superficie/Planta ${notasFinales.Superficie ? '✅' : '⏳'}</button>`;
+        }
+    }
+
+    function iniciarExamen(tipo) {
+        examenActual = tipo;
+        document.getElementById('tituloExamen').innerText = "Examen: " + tipo;
+        const cont = document.getElementById('preguntasContenedor');
+        cont.innerHTML = "";
+        
+        BANCO_PREGUNTAS[tipo].forEach((pre, i) => {
+            let opciones = pre.o.map((opt, j) => `<label><input type="radio" name="pre${i}" value="${j === pre.c ? 100 : 0}"> ${opt}</label><br>`).join("");
+            cont.innerHTML += `<div class="pregunta-box"><p>${i+1}. ${pre.p}</p>${opciones}</div>`;
+        });
+
+        document.getElementById('p-menu').classList.add('hidden');
+        document.getElementById('p-examen').classList.remove('hidden');
+    }
+
+    async function procesarResultado() {
+        const totalPreguntas = BANCO_PREGUNTAS[examenActual].length;
+        let suma = 0;
+        for(let i=0; i<totalPreguntas; i++) {
+            const sel = document.querySelector(`input[name="pre${i}"]:checked`);
+            if(!sel) return alert("Responde todas las preguntas.");
+            suma += parseInt(sel.value);
+        }
+        const nota = Math.round(suma / totalPreguntas);
+        notasFinales[examenActual] = nota;
+        
+        await db.collection("trabajadores").doc(userDocId).update({ ["nota_" + examenActual]: nota });
+        
+        document.getElementById('p-examen').classList.add('hidden');
+        document.getElementById('p-menu').classList.remove('hidden');
+        renderizarMenu();
+        
+        if(Object.keys(notasFinales).length >= 2) document.getElementById('areaFirma').classList.remove('hidden');
+    }
+
+    // Firma Canvas (Lógica estándar previa)
     const canvasF = document.getElementById('canvas-firma');
     const ctxF = canvasF.getContext('2d');
     let dib = false;
-    function pos(e) { const r = canvasF.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - r.left, y: cy - r.top }; }
-    canvasF.addEventListener('mousedown', (e) => { dib = true; ctxF.beginPath(); const p = pos(e); ctxF.moveTo(p.x, p.y); });
-    canvasF.addEventListener('mousemove', (e) => { if(!dib) return; const p = pos(e); ctxF.lineTo(p.x, p.y); ctxF.stroke(); });
-    canvasF.addEventListener('mouseup', () => dib = false);
-    canvasF.addEventListener('touchstart', (e) => { e.preventDefault(); dib = true; ctxF.beginPath(); const p = pos(e); ctxF.moveTo(p.x, p.y); });
-    canvasF.addEventListener('touchmove', (e) => { e.preventDefault(); if(!dib) return; const p = pos(e); ctxF.lineTo(p.x, p.y); ctxF.stroke(); });
-    canvasF.addEventListener('touchend', () => dib = false);
-    function limpiarFirma() { ctxF.clearRect(0, 0, canvasF.width, canvasF.height); }
-
-    // Compresión Foto
-    function previewFoto(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.getElementById('canvasResize');
-                    const ctx = canvas.getContext('2d');
-                    const MAX_WIDTH = 400;
-                    let width = img.width; let height = img.height;
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    canvas.width = width; canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    fotoComprimida = canvas.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('imgPre').src = fotoComprimida;
-                    document.getElementById('imgPre').style.display = 'block';
-                }
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    async function iniciarSesion() {
-        const nom = document.getElementById('nombre').value; const ci = document.getElementById('ci').value;
-        if(!nom || !ci || !fotoComprimida) return alert("Falta nombre, CI o Foto.");
-        document.getElementById('msgCarga').classList.remove('hidden');
-        try {
-            const res = await db.collection("trabajadores").add({
-                nombre: nom, ci: ci, operacion: document.getElementById('operacion').value,
-                fotoCI: fotoComprimida, fecha: new Date().toLocaleString(), notaInd: 0, notaAlt: 0, notaEne: 0
-            });
-            userDocId = res.id; document.getElementById('infoUser').innerText = nom;
-            document.getElementById('p-registro').classList.add('hidden'); document.getElementById('p-menu').classList.remove('hidden');
-        } catch (e) { alert(e.message); }
-    }
-
-    function abrirModulo(id) { document.getElementById('p-menu').classList.add('hidden'); document.getElementById(id).classList.remove('hidden'); }
-
-    async function calificar(pref, pAct, sId, campo) {
-        await db.collection("trabajadores").doc(userDocId).update({ [campo]: 100 });
-        datosLocales[campo.replace('nota','').toLowerCase()] = 100;
-        document.getElementById(sId).innerText = "✅ 100";
-        document.getElementById(pAct).classList.add('hidden'); document.getElementById('p-menu').classList.remove('hidden');
-        if(datosLocales.ind > 0 && datosLocales.alt > 0 && datosLocales.ene > 0) document.getElementById('areaFirma').classList.remove('hidden');
-    }
-
-    // Panel Admin e Exportar
-    async function verAdmin() {
-        const pass = prompt("Clave:"); if(pass !== "1234") return;
-        document.getElementById('p-registro').classList.add('hidden');
-        document.getElementById('p-admin').classList.remove('hidden');
-        const query = await db.collection("trabajadores").orderBy("fecha", "desc").get();
-        const cuerpo = document.getElementById('cuerpoTabla'); cuerpo.innerHTML = "";
-        query.forEach(doc => {
-            const d = doc.data();
-            cuerpo.innerHTML += `<tr><td>${d.nombre}</td><td>${d.ci}</td><td>${d.operacion}</td><td>${d.notaInd}</td><td>${d.notaAlt}</td><td>${d.notaEne}</td><td>${d.fecha}</td></tr>`;
-        });
-    }
-
-    function exportarExcel() {
-        let csv = "Nombre,CI,Sede,Induccion,Altura,Energia,Fecha\n";
-        const filas = document.getElementById("cuerpoTabla").getElementsByTagName("tr");
-        for (let i = 0; i < filas.length; i++) {
-            let cels = filas[i].getElementsByTagName("td");
-            let fila = [];
-            for (let j = 0; j < cels.length; j++) fila.push(cels[j].innerText);
-            csv += fila.join(",") + "\n";
-        }
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute('hidden', ''); a.setAttribute('href', url); a.setAttribute('download', 'Reporte_RIC_SW.csv');
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    }
-
-    function filtrarTabla() {
-        const val = document.getElementById("buscador").value.toUpperCase();
-        const filas = document.getElementById("cuerpoTabla").getElementsByTagName("tr");
-        for (let i = 0; i < filas.length; i++) {
-            filas[i].style.display = filas[i].innerText.toUpperCase().includes(val) ? "" : "none";
-        }
-    }
+    function getP(e) { const r = canvasF.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; return { x: cx - r.left, y: (e.touches ? e.touches[0].clientY : e.clientY) - r.top }; }
+    canvasF.addEventListener('touchstart', (e) => { e.preventDefault(); dib=true; ctxF.beginPath(); let p=getP(e); ctxF.moveTo(p.x, p.y); });
+    canvasF.addEventListener('touchmove', (e) => { e.preventDefault(); if(!dib) return; let p=getP(e); ctxF.lineTo(p.x, p.y); ctxF.stroke(); });
+    canvasF.addEventListener('touchend', () => dib=false);
+    function limpiarFirma() { ctxF.clearRect(0,0,canvasF.width, canvasF.height); }
 
     function generarPDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.text("CERTIFICADO RIC-SW", 20, 20);
-        doc.text(`Trabajador: ${document.getElementById('nombre').value}`, 20, 40);
-        if(fotoComprimida) doc.addImage(fotoComprimida, 'JPEG', 150, 30, 40, 30);
-        const firmaData = canvasF.toDataURL('image/png');
-        doc.addImage(firmaData, 'PNG', 40, 100, 50, 20);
-        doc.save("Certificado.pdf");
+        doc.setFontSize(20); doc.text("CERTIFICADO DE CAPACITACIÓN RIC-SW", 105, 20, {align:"center"});
+        doc.setFontSize(12); doc.text(`Trabajador: ${document.getElementById('nombre').value}`, 20, 40);
+        doc.text(`C.I.: ${document.getElementById('ci').value}`, 20, 50);
+        doc.text(`Área de Ingreso: ${areaSeleccionada}`, 20, 60);
+        
+        let y = 80;
+        for(let curso in notasFinales) {
+            doc.text(`- ${curso}: ${notasFinales[curso]}/100`, 30, y);
+            y += 10;
+        }
+
+        if(fotos.fotoCIA) doc.addImage(fotos.fotoCIA, 'JPEG', 140, 40, 50, 30);
+        const fData = canvasF.toDataURL('image/png');
+        doc.addImage(fData, 'PNG', 40, 180, 50, 25);
+        doc.text("FIRMA DEL TRABAJADOR", 65, 210, {align:"center"});
+        doc.save("Certificado_Oficial_SW.pdf");
     }
 </script>
 </body>
