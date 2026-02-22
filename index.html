@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RIC-SW | Sistema Integral</title>
+    <title>RIC-SW | Gestión de Seguridad</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -16,27 +16,31 @@
         h2 { color: var(--rojo); text-align: center; border-bottom: 2px solid var(--rojo); padding-bottom: 10px; }
         .hidden { display: none; }
         
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
         .btn-rojo { background: var(--rojo); color: white; }
         .btn-verde { background: var(--verde); color: white; }
         .btn-gris { background: var(--gris); color: white; }
         
-        .modulo { background: white; border: 2px solid #ddd; text-align: left; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 15px; border-radius: 8px; font-weight: bold; }
+        .modulo { background: white; border: 2px solid #ddd; text-align: left; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 15px; border-radius: 8px; }
         #canvas-firma { border: 2px dashed #999; background: #fff; width: 100%; border-radius: 8px; touch-action: none; }
 
-        /* Estilos Tabla Admin */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: var(--rojo); color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
+        /* Estilos Tabla Admin Mejorada */
+        .admin-container { max-width: 95%; background: white; margin: 10px auto; padding: 20px; border-radius: 15px; }
+        #buscador { border: 2px solid var(--rojo); margin-bottom: 15px; padding: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: var(--rojo); color: white; position: sticky; top: 0; }
+        .badge { padding: 5px 8px; border-radius: 5px; color: white; font-weight: bold; text-align: center; display: inline-block; }
+        .bg-aprobado { background-color: var(--verde); }
+        .bg-reprobado { background-color: var(--rojo); }
     </style>
 </head>
 <body>
 
 <div id="p-registro" class="card">
     <h2>RIC-SW</h2>
-    <p style="text-align:center; color:#666;">Inducción y Riesgos Críticos</p>
+    <p style="text-align:center; color:#666;">Certificación Sinchi Wayra</p>
     <input type="text" id="nombre" placeholder="Nombre Completo">
     <input type="text" id="ci" placeholder="CI (Ej: 1234567 OR)">
     <select id="operacion">
@@ -44,11 +48,11 @@
         <option value="Porco">Porco</option>
         <option value="Reserva">Reserva</option>
     </select>
-    <button class="btn btn-gris" onclick="document.getElementById('fotoInput').click()">📸 FOTO CARNET</button>
+    <button class="btn btn-gris" onclick="document.getElementById('fotoInput').click()">📸 TOMAR FOTO DEL C.I.</button>
     <input type="file" id="fotoInput" accept="image/*" capture="camera" style="display:none" onchange="previewFoto(this)">
     <img id="imgPre" style="width:100%; display:none; margin-top:10px; border-radius:8px;">
-    <button class="btn btn-rojo" onclick="iniciarSesion()">INGRESAR</button>
-    <p style="text-align:center; margin-top:30px;"><a href="#" onclick="verAdmin()" style="color:#ccc; font-size:10px; text-decoration:none;">Panel Control</a></p>
+    <button class="btn btn-rojo" onclick="iniciarSesion()">INGRESAR AL SISTEMA</button>
+    <p style="text-align:center; margin-top:30px;"><a href="#" onclick="verAdmin()" style="color:#ddd; font-size:11px; text-decoration:none;">Acceso Supervisor</a></p>
 </div>
 
 <div id="p-menu" class="card hidden">
@@ -61,21 +65,24 @@
     <div id="areaFirma" class="hidden" style="text-align:center; margin-top:20px;">
         <p style="font-weight:bold; color:var(--rojo);">Firma del Trabajador:</p>
         <canvas id="canvas-firma" width="400" height="150"></canvas>
-        <button class="btn btn-gris" onclick="limpiarFirma()">BORRAR FIRMA</button>
-        <button class="btn btn-verde" onclick="generarPDF()">📥 DESCARGAR CERTIFICADO</button>
+        <button class="btn btn-gris" style="width:48%" onclick="limpiarFirma()">LIMPIAR</button>
+        <button class="btn btn-verde" style="width:48%" onclick="generarPDF()">PDF</button>
     </div>
 </div>
 
-<div id="p-admin" class="card hidden" style="max-width: 900px;">
-    <h2>Panel de Control - Wilder</h2>
-    <button class="btn btn-gris" onclick="location.reload()">VOLVER AL REGISTRO</button>
-    <div style="overflow-x:auto;">
+<div id="p-admin" class="admin-container hidden">
+    <h2 style="margin-bottom:5px;">Panel de Control Wilder</h2>
+    <input type="text" id="buscador" onkeyup="filtrarTabla()" placeholder="🔍 Buscar por nombre o CI...">
+    <button class="btn btn-gris" style="margin-bottom:15px;" onclick="location.reload()">CERRAR PANEL</button>
+    
+    <div style="overflow-x:auto; max-height: 500px;">
         <table id="tablaReporte">
             <thead>
                 <tr>
                     <th>Nombre</th>
                     <th>CI</th>
                     <th>Sede</th>
+                    <th>Estado</th>
                     <th>Inducción</th>
                     <th>Altura</th>
                     <th>Energía</th>
@@ -89,24 +96,25 @@
 
 <div id="p-ind" class="card hidden">
     <h2>Examen Inducción</h2>
-    <p>¿Prioridad de Seguridad?</p>
-    <label><input type="radio" name="i1" value="100"> Prioridad #1</label><br>
+    <p>¿Qué prioridad tiene la seguridad?</p>
+    <label><input type="radio" name="i1" value="100"> Prioridad #1</label>
     <button class="btn btn-rojo" onclick="calificar('i', 'p-ind', 's-ind', 'notaInd')">GUARDAR</button>
 </div>
 <div id="p-alt" class="card hidden">
     <h2>Examen Altura</h2>
-    <p>¿Altura obligatoria?</p>
-    <label><input type="radio" name="a1" value="100"> 1.80m</label><br>
+    <p>¿Altura mínima para arnés?</p>
+    <label><input type="radio" name="a1" value="100"> 1.80m</label>
     <button class="btn btn-rojo" onclick="calificar('a', 'p-alt', 's-alt', 'notaAlt')">GUARDAR</button>
 </div>
 <div id="p-ene" class="card hidden">
     <h2>Examen Energía</h2>
-    <p>¿Primera regla?</p>
-    <label><input type="radio" name="e1" value="100"> Corte visible</label><br>
+    <p>¿Primera regla de oro?</p>
+    <label><input type="radio" name="e1" value="100"> Corte visible</label>
     <button class="btn btn-rojo" onclick="calificar('e', 'p-ene', 's-ene', 'notaEne')">GUARDAR</button>
 </div>
 
 <script>
+    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyCp7opkKQzw0pf3VbQcOO7295Kz1E1zDTk",
         authDomain: "ric-sw.firebaseapp.com",
@@ -117,9 +125,10 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    
     let userDocId = ""; let fotoBase64 = ""; let datosLocales = { ind: 0, alt: 0, ene: 0 };
 
-    // Lógica Firma
+    // Lógica Firma Canvas
     const canvas = document.getElementById('canvas-firma');
     const ctx = canvas.getContext('2d');
     let dibujando = false;
@@ -136,7 +145,7 @@
 
     async function iniciarSesion() {
         const nom = document.getElementById('nombre').value; const ci = document.getElementById('ci').value;
-        if(!nom || !ci || !fotoBase64) return alert("Faltan datos.");
+        if(!nom || !ci || !fotoBase64) return alert("Faltan datos o foto.");
         const res = await db.collection("trabajadores").add({ nombre: nom, ci, operacion: document.getElementById('operacion').value, fotoCI: fotoBase64, fecha: new Date().toLocaleString(), notaInd:0, notaAlt:0, notaEne:0 });
         userDocId = res.id; document.getElementById('infoUser').innerText = nom;
         document.getElementById('p-registro').classList.add('hidden'); document.getElementById('p-menu').classList.remove('hidden');
@@ -155,9 +164,10 @@
         if(datosLocales.ind > 0 && datosLocales.alt > 0 && datosLocales.ene > 0) document.getElementById('areaFirma').classList.remove('hidden');
     }
 
+    // Lógica Panel Admin y Filtro
     async function verAdmin() {
-        const pass = prompt("Clave de Administrador:");
-        if(pass !== "1234") return alert("Acceso denegado");
+        const pass = prompt("Clave:");
+        if(pass !== "1234") return alert("Error.");
         document.getElementById('p-registro').classList.add('hidden');
         document.getElementById('p-admin').classList.remove('hidden');
         const querySnapshot = await db.collection("trabajadores").orderBy("fecha", "desc").get();
@@ -165,8 +175,28 @@
         cuerpo.innerHTML = "";
         querySnapshot.forEach((doc) => {
             const d = doc.data();
-            cuerpo.innerHTML += `<tr><td>${d.nombre}</td><td>${d.ci}</td><td>${d.operacion}</td><td>${d.notaInd}</td><td>${d.notaAlt}</td><td>${d.notaEne}</td><td>${d.fecha}</td></tr>`;
+            const promedio = (d.notaInd + d.notaAlt + d.notaEne) / 3;
+            const estado = promedio >= 71 ? '<span class="badge bg-aprobado">APROBADO</span>' : '<span class="badge bg-reprobado">REPROBADO</span>';
+            cuerpo.innerHTML += `<tr>
+                <td>${d.nombre}</td>
+                <td>${d.ci}</td>
+                <td>${d.operacion}</td>
+                <td>${estado}</td>
+                <td>${d.notaInd}</td>
+                <td>${d.notaAlt}</td>
+                <td>${d.notaEne}</td>
+                <td>${d.fecha}</td>
+            </tr>`;
         });
+    }
+
+    function filtrarTabla() {
+        const input = document.getElementById("buscador").value.toUpperCase();
+        const filas = document.getElementById("cuerpoTabla").getElementsByTagName("tr");
+        for (let i = 0; i < filas.length; i++) {
+            const texto = filas[i].innerText.toUpperCase();
+            filas[i].style.display = texto.indexOf(input) > -1 ? "" : "none";
+        }
     }
 
     function generarPDF() {
