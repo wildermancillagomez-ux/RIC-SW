@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RIC-SW | Certificación Sinchi Wayra</title>
+    <title>RIC-SW | Sistema de Certificación Oficial</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -16,18 +16,14 @@
         h2 { color: var(--rojo); text-align: center; border-bottom: 2px solid var(--rojo); padding-bottom: 10px; margin-top: 0; }
         .hidden { display: none; }
         
-        /* Controles */
         input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-top: 10px; }
         .btn-rojo { background: var(--rojo); color: white; }
         .btn-verde { background: var(--verde); color: white; }
         .btn-gris { background: var(--gris); color: white; }
         
-        /* Menú y Exámenes */
         .modulo { background: white; border: 2px solid #ddd; color: #333; text-align: left; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .pregunta { background: #fafafa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--rojo); }
-        .pregunta p { font-weight: bold; margin: 0 0 10px 0; }
-        label { display: block; padding: 8px 0; cursor: pointer; }
         input[type="radio"] { margin-right: 10px; transform: scale(1.2); }
     </style>
 </head>
@@ -35,72 +31,64 @@
 
 <div id="p-registro" class="card">
     <h2>RIC-SW</h2>
-    <p style="text-align:center; color:#666; font-size: 14px;">Registro de Capacitación Sinchi Wayra</p>
-    
+    <p style="text-align:center; color:#666; font-size: 14px;">Certificación de Seguridad Sinchi Wayra</p>
     <input type="text" id="nombre" placeholder="Nombre Completo">
     <input type="text" id="ci" placeholder="CI (Ej: 1234567 OR)">
-    
-    <label>Sede / Operación:</label>
     <select id="operacion">
         <option value="Bolivar">Bolívar</option>
         <option value="Porco">Porco</option>
         <option value="Reserva">Reserva</option>
         <option value="Don Diego">Don Diego</option>
     </select>
-
     <button class="btn btn-gris" onclick="document.getElementById('fotoInput').click()">📸 TOMAR FOTO DEL C.I.</button>
     <input type="file" id="fotoInput" accept="image/*" capture="camera" style="display:none" onchange="previewFoto(this)">
     <img id="imgPre" style="width:100%; display:none; margin-top:10px; border-radius:8px; border: 1px solid #ddd;">
-    
     <button class="btn btn-rojo" style="margin-top:20px;" onclick="iniciarSesion()">INGRESAR AL SISTEMA</button>
 </div>
 
 <div id="p-menu" class="card hidden">
     <h2>Mi Progreso</h2>
-    <p id="infoUser" style="text-align:center; font-weight:bold; color:#444;"></p>
+    <p id="infoUser" style="text-align:center; font-weight:bold;"></p>
     <hr>
     <button class="btn modulo" onclick="abrirModulo('p-ind')">1. Inducción General <span id="s-ind">⏳</span></button>
     <button class="btn modulo" onclick="abrirModulo('p-alt')">2. Trabajos en Altura (ERC 3) <span id="s-alt">⏳</span></button>
     <button class="btn modulo" onclick="abrirModulo('p-ene')">3. Aislamiento Energía (ERC 2) <span id="s-ene">⏳</span></button>
-    
     <div id="areaCertificado" class="hidden">
-        <p style="text-align:center; color: var(--verde); font-weight:bold;">¡Capacitación Completada!</p>
-        <button class="btn btn-verde" onclick="generarPDF()">📥 DESCARGAR CERTIFICADO PDF</button>
+        <button class="btn btn-verde" onclick="generarPDF()">📥 DESCARGAR CERTIFICADO OFICIAL</button>
     </div>
 </div>
 
 <div id="p-ind" class="card hidden">
     <h2>Inducción General</h2>
     <div class="pregunta">
-        <p>1. ¿Qué prioridad tiene la Seguridad en nuestra empresa?</p>
+        <p>¿Qué prioridad tiene la Seguridad en Sinchi Wayra?</p>
         <label><input type="radio" name="i1" value="100"> Prioridad #1</label>
         <label><input type="radio" name="i1" value="0"> Secundaria</label>
     </div>
-    <button class="btn btn-rojo" onclick="calificar('i', 'p-ind', 's-ind', 'notaInd')">GUARDAR RESULTADO</button>
+    <button class="btn btn-rojo" onclick="calificar('i', 'p-ind', 's-ind', 'notaInd')">GUARDAR</button>
 </div>
 
 <div id="p-alt" class="card hidden">
     <h2>ERC 3: Trabajo en Altura</h2>
     <div class="pregunta">
-        <p>1. ¿A qué altura se debe usar obligatoriamente el arnés?</p>
+        <p>¿A qué altura se debe usar obligatoriamente el arnés?</p>
         <label><input type="radio" name="a1" value="100"> 1.80 metros o más</label>
         <label><input type="radio" name="a1" value="0"> 1.50 metros o más</label>
     </div>
-    <button class="btn btn-rojo" onclick="calificar('a', 'p-alt', 's-alt', 'notaAlt')">GUARDAR RESULTADO</button>
+    <button class="btn btn-rojo" onclick="calificar('a', 'p-alt', 's-alt', 'notaAlt')">GUARDAR</button>
 </div>
 
 <div id="p-ene" class="card hidden">
     <h2>ERC 2: Aislamiento de Energía</h2>
     <div class="pregunta">
-        <p>1. ¿Qué se debe hacer antes de intervenir un equipo?</p>
-        <label><input type="radio" name="e1" value="100"> Cortar energía y Bloquear</label>
-        <label><input type="radio" name="e1" value="0"> Solo apagar el equipo</label>
+        <p>¿Cuál es la primera Regla de Oro?</p>
+        <label><input type="radio" name="e1" value="100"> Corte visible de fuentes</label>
+        <label><input type="radio" name="e1" value="0"> Solo poner candado</label>
     </div>
-    <button class="btn btn-rojo" onclick="calificar('e', 'p-ene', 's-ene', 'notaEne')">GUARDAR RESULTADO</button>
+    <button class="btn btn-rojo" onclick="calificar('e', 'p-ene', 's-ene', 'notaEne')">GUARDAR</button>
 </div>
 
 <script>
-    // CONFIGURACIÓN DE FIREBASE (TU PROYECTO)
     const firebaseConfig = {
         apiKey: "AIzaSyCp7opkKQzw0pf3VbQcOO7295Kz1E1zDTk",
         authDomain: "ric-sw.firebaseapp.com",
@@ -112,18 +100,11 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    
-    let userDocId = "";
-    let fotoBase64 = "";
-    let datosLocales = { ind: 0, alt: 0, ene: 0 };
+    let userDocId = ""; let fotoBase64 = ""; let datosLocales = { ind: 0, alt: 0, ene: 0 };
 
     function previewFoto(input) {
         const reader = new FileReader();
-        reader.onload = e => {
-            fotoBase64 = e.target.result;
-            document.getElementById('imgPre').src = fotoBase64;
-            document.getElementById('imgPre').style.display = 'block';
-        };
+        reader.onload = e => { fotoBase64 = e.target.result; document.getElementById('imgPre').src = fotoBase64; document.getElementById('imgPre').style.display = 'block'; };
         reader.readAsDataURL(input.files[0]);
     }
 
@@ -131,43 +112,28 @@
         const nom = document.getElementById('nombre').value;
         const ci = document.getElementById('ci').value;
         const op = document.getElementById('operacion').value;
-        if(!nom || !ci || !fotoBase64) return alert("Completa tus datos y la foto del C.I.");
-
-        const res = await db.collection("trabajadores").add({
-            nombre: nom, ci: ci, operacion: op, fotoCI: fotoBase64, fecha: new Date().toLocaleString(),
-            notaInd: 0, notaAlt: 0, notaEne: 0
-        });
+        if(!nom || !ci || !fotoBase64) return alert("Faltan datos.");
+        const res = await db.collection("trabajadores").add({ nombre: nom, ci, operacion: op, fotoCI: fotoBase64, fecha: new Date().toLocaleString(), notaInd:0, notaAlt:0, notaEne:0 });
         userDocId = res.id;
-        document.getElementById('infoUser').innerText = `${nom} - ${ci}`;
+        document.getElementById('infoUser').innerText = nom;
         document.getElementById('p-registro').classList.add('hidden');
         document.getElementById('p-menu').classList.remove('hidden');
     }
 
-    function abrirModulo(id) {
-        document.getElementById('p-menu').classList.add('hidden');
-        document.getElementById(id).classList.remove('hidden');
-    }
+    function abrirModulo(id) { document.getElementById('p-menu').classList.add('hidden'); document.getElementById(id).classList.remove('hidden'); }
 
     async function calificar(pref, pAct, sId, campo) {
         const r = document.querySelector(`input[name^="${pref}"]:checked`);
-        if(!r) return alert("Selecciona una respuesta.");
-        
+        if(!r) return alert("Responda la pregunta.");
         const nota = parseInt(r.value);
         await db.collection("trabajadores").doc(userDocId).update({ [campo]: nota });
-        
-        // Guardar progreso local para el PDF
         if(campo === 'notaInd') datosLocales.ind = nota;
         if(campo === 'notaAlt') datosLocales.alt = nota;
         if(campo === 'notaEne') datosLocales.ene = nota;
-
         document.getElementById(sId).innerText = "✅ " + nota;
         document.getElementById(pAct).classList.add('hidden');
         document.getElementById('p-menu').classList.remove('hidden');
-
-        // Verificar si terminó todo
-        if(datosLocales.ind > 0 && datosLocales.alt > 0 && datosLocales.ene > 0) {
-            document.getElementById('areaCertificado').classList.remove('hidden');
-        }
+        if(datosLocales.ind > 0 && datosLocales.alt > 0 && datosLocales.ene > 0) document.getElementById('areaCertificado').classList.remove('hidden');
     }
 
     function generarPDF() {
@@ -177,43 +143,32 @@
         const ci = document.getElementById('ci').value;
         const op = document.getElementById('operacion').value;
 
-        // Estilo del Certificado
-        doc.setFillColor(183, 28, 28); // Rojo
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.text("CERTIFICADO DE CAPACITACIÓN", 20, 25);
-        
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(14);
-        doc.text("Se certifica que:", 20, 55);
-        doc.setFontSize(18);
-        doc.text(nom.toUpperCase(), 20, 65);
-        
-        doc.setFontSize(12);
-        doc.text(`C.I.: ${ci}`, 20, 75);
-        doc.text(`Operación: ${op}`, 20, 82);
-        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 89);
-        
-        doc.line(20, 95, 190, 95);
-        
-        doc.setFontSize(14);
-        doc.text("RESULTADOS DE EVALUACIÓN:", 20, 110);
-        doc.setFontSize(12);
-        doc.text(`- Inducción General: ${datosLocales.ind}/100`, 30, 120);
-        doc.text(`- Trabajos en Altura: ${datosLocales.alt}/100`, 30, 130);
-        doc.text(`- Aislamiento de Energía: ${datosLocales.ene}/100`, 30, 140);
-        
-        // Insertar foto del C.I.
-        if(fotoBase64) {
-            doc.text("RESPALDO DE IDENTIDAD:", 130, 110);
-            doc.addImage(fotoBase64, 'JPEG', 130, 115, 60, 40);
-        }
+        doc.setFillColor(183, 28, 28); doc.rect(0, 0, 210, 35, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold");
+        doc.text("CERTIFICADO DE HABILITACIÓN", 105, 18, { align: "center" });
+        doc.setFontSize(11); doc.text("Sinchi Wayra - Sistema de Gestión de Seguridad", 105, 26, { align: "center" });
 
-        doc.setFontSize(10);
-        doc.text("Este documento es una certificación digital generada por el sistema RIC-SW.", 20, 280);
+        doc.setTextColor(0, 0, 0); doc.setFontSize(10); doc.text("SE CERTIFICA QUE:", 20, 50);
+        doc.setFontSize(18); doc.text(nom.toUpperCase(), 20, 60);
+        doc.setFontSize(12); doc.setFont("helvetica", "normal");
+        doc.text(`C.I.: ${ci}`, 20, 70); doc.text(`Operación: ${op}`, 20, 78);
+        doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 86);
+
+        if(fotoBase64) { doc.setDrawColor(183, 28, 28); doc.rect(145, 45, 45, 45); doc.addImage(fotoBase64, 'JPEG', 147, 47, 41, 41); }
+
+        doc.setDrawColor(200, 200, 200); doc.line(20, 100, 190, 100);
+        doc.setFont("helvetica", "bold"); doc.text("CALIFICACIONES OBTENIDAS:", 20, 110);
+        doc.setFont("helvetica", "normal");
+        doc.text(`- Inducción General: ${datosLocales.ind}/100`, 25, 120);
+        doc.text(`- ERC 3 Trabajos en Altura: ${datosLocales.alt}/100`, 25, 130);
+        doc.text(`- ERC 2 Aislamiento de Energía: ${datosLocales.ene}/100`, 25, 140);
+
+        doc.line(40, 230, 90, 230); doc.text("FIRMA TRABAJADOR", 65, 235, { align: "center" });
+        doc.line(120, 230, 170, 230); doc.text("FIRMA SEGURIDAD", 145, 235, { align: "center" });
         
-        doc.save(`RIC_SW_Certificado_${ci}.pdf`);
+        doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+        doc.text(`ID Validación: ${userDocId}`, 20, 285);
+        doc.save(`Certificado_SW_${ci}.pdf`);
     }
 </script>
 </body>
