@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIC-SW | Sistema Unificado</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root { --rojo: #b71c1c; --gris: #454545; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 550px; width: 100%; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: var(--rojo); text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; font-size: 13px; color: #777; margin-bottom: 20px; }
+        
+        /* Formularios */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        /* Botones */
+        .btn-main { width: 100%; padding: 15px; background: var(--rojo); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        .btn-main:hover { background: #8e0000; }
+        .btn-foto { background: var(--gris); margin-bottom: 10px; }
+        
+        /* Examen */
+        .pregunta { background: #fdfdfd; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid var(--rojo); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .pregunta p { font-weight: bold; margin: 0 0 10px 0; }
+        .opcion { display: block; padding: 10px; cursor: pointer; }
+        
+        /* Admin y otros */
+        .preview-img { width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; border-radius: 8px; display: none; border: 1px dashed #ccc; }
+        #seccionExamen, #seccionAdmin, #seccionResultado { display: none; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="seccionRegistro">
+    <h2>RIC-SW</h2>
+    <p class="subtitle">Registro de Inducciones y Capacitaciones Sinchi Wayra</p>
+    
+    <div class="form-group">
+        <label>Nombre Completo:</label>
+        <input type="text" id="nombre" placeholder="Nombre y Apellido">
+    </div>
+    <div class="form-group">
+        <label>Carnet de Identidad (CI):</label>
+        <input type="text" id="ci" placeholder="Ej: 1234567 LP">
+    </div>
+    <div class="form-group">
+        <label>Operación:</label>
+        <select id="operacion">
+            <option value="Bolivar">Bolívar</option>
+            <option value="Porco">Porco</option>
+            <option value="Reserva">Reserva</option>
+            <option value="Don Diego">Planta Don Diego</option>
+        </select>
+    </div>
+
+    <label>Documentación Visual:</label>
+    <input type="file" id="inputFoto" accept="image/*" capture="camera" style="display:none" onchange="procesarFoto(this)">
+    <button class="btn-main btn-foto" onclick="document.getElementById('inputFoto').click()">📸 TOMAR FOTO C.I. ANVERSO</button>
+    <img id="vistaPrevia" class="preview-img">
+
+    <button class="btn-main" style="margin-top:20px;" onclick="iniciarCapacitacion()">REGISTRAR E INICIAR EXAMEN</button>
+    
+    <p style="text-align:center; font-size:12px; margin-top:20px;">
+        <a href="#" onclick="mostrarAdmin()" style="color:#999;">Acceso Supervisor</a>
+    </p>
+</div>
+
+<div class="container" id="seccionExamen">
+    <h2>Evaluación de Inducción</h2>
+    <div id="preguntasContenedor">
+        <div class="pregunta">
+            <p>1. ¿Qué significa Sinchi Wayra en quechua?</p>
+            <label class="opcion"><input type="radio" name="p1" value="0"> Viento Suave</label>
+            <label class="opcion"><input type="radio" name="p1" value="100"> Viento Fuerte</label>
+        </div>
+        <div class="pregunta">
+            <p>2. ¿Cuántas "Acciones que Salvan Vidas" tiene el estándar?</p>
+            <label class="opcion"><input type="radio" name="p2" value="0"> 5 acciones</label>
+            <label class="opcion"><input type="radio" name="p2" value="100"> 9 acciones</label>
+        </div>
+        <div class="pregunta">
+            <p>3. ¿A qué distancia se considera trabajo en altura?</p>
+            <label class="opcion"><input type="radio" name="p3" value="100"> 1.80 metros o más</label>
+            <label class="opcion"><input type="radio" name="p3" value="0"> 1.50 metros o más</label>
+        </div>
+    </div>
+    <button class="btn-main" onclick="evaluarExamen()">FINALIZAR Y GUARDAR</button>
+</div>
+
+<div class="container" id="seccionResultado" style="text-align:center;">
+    <h2 id="resTitulo"></h2>
+    <p style="font-size:40px; font-weight:bold; margin:10px 0;" id="resNota"></p>
+    <p>La información ha sido sincronizada con la nube.</p>
+    <button class="btn-main" onclick="location.reload()">SALIR / NUEVO REGISTRO</button>
+</div>
+
+<div class="container" id="seccionAdmin">
+    <h2>Panel de Consulta</h2>
+    <input type="text" id="busquedaCI" placeholder="CI del trabajador..." style="margin-bottom:10px;">
+    <button class="btn-main" style="background:#333;" onclick="buscarCI()">BUSCAR HABILITACIÓN</button>
+    <div id="resultadoBusqueda" style="margin-top:20px;"></div>
+    <button class="btn-main btn-foto" style="margin-top:20px;" onclick="location.reload()">VOLVER</button>
+</div>
+
+<script>
+    // CONFIGURACIÓN DE TU FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyCp7opkKQzw0pf3VbQcOO7295Kz1E1zDTk",
+        authDomain: "ric-sw.firebaseapp.com",
+        projectId: "ric-sw",
+        storageBucket: "ric-sw.firebasestorage.app",
+        messagingSenderId: "883694529169",
+        appId: "1:883694529169:web:acbaf9645b12bbee532d30"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    let currentId = "";
+    let fotoData = "";
+
+    // Función para procesar la foto y convertirla a texto (Base64)
+    function procesarFoto(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fotoData = e.target.result;
+            const img = document.getElementById('vistaPrevia');
+            img.src = fotoData;
+            img.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+
+    async function iniciarCapacitacion() {
+        const nombre = document.getElementById('nombre').value;
+        const ci = document.getElementById('ci').value;
+        const operacion = document.getElementById('operacion').value;
+
+        if(!nombre || !ci || !fotoData) {
+            alert("Por favor complete nombre, CI y tome la foto del carnet.");
+            return;
+        }
+
+        const res = await db.collection("trabajadores").add({
+            nombre: nombre,
+            ci: ci,
+            operacion: operacion,
+            fotoCI: fotoData,
+            fecha: new Date().toLocaleString(),
+            notaInduccion: 0,
+            estado: "Pendiente"
+        });
+        
+        currentId = res.id;
+        document.getElementById('seccionRegistro').style.display = 'none';
+        document.getElementById('seccionExamen').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    async function evaluarExamen() {
+        const p1 = document.querySelector('input[name="p1"]:checked');
+        const p2 = document.querySelector('input[name="p2"]:checked');
+        const p3 = document.querySelector('input[name="p3"]:checked');
+
+        if(!p1 || !p2 || !p3) {
+            alert("Responde todas las preguntas.");
+            return;
+        }
+
+        let nota = (parseInt(p1.value) + parseInt(p2.value) + parseInt(p3.value)) / 3;
+        nota = Math.round(nota);
+
+        await db.collection("trabajadores").doc(currentId).update({
+            notaInduccion: nota,
+            estado: nota >= 80 ? "APROBADO" : "REPROBADO"
+        });
+
+        document.getElementById('seccionExamen').style.display = 'none';
+        document.getElementById('seccionResultado').style.display = 'block';
+        document.getElementById('resNota').innerText = nota + "/100";
+        document.getElementById('resTitulo').innerText = nota >= 80 ? "¡APROBADO!" : "INTENTE NUEVAMENTE";
+    }
+
+    function mostrarAdmin() {
+        document.getElementById('seccionRegistro').style.display = 'none';
+        document.getElementById('seccionAdmin').style.display = 'block';
+    }
+
+    async function buscarCI() {
+        const ci = document.getElementById('busquedaCI').value;
+        const div = document.getElementById('resultadoBusqueda');
+        div.innerHTML = "Buscando...";
+
+        const query = await db.collection("trabajadores").where("ci", "==", ci).get();
+        
+        if(query.empty) {
+            div.innerHTML = "<p style='color:red;'>El trabajador no está registrado.</p>";
+            return;
+        }
+
+        div.innerHTML = "";
+        query.forEach(doc => {
+            const d = doc.data();
+            const color = d.notaInduccion >= 80 ? 'green' : 'red';
+            div.innerHTML += `
+                <div style="border:1px solid #ccc; padding:15px; border-radius:10px; background:#fff;">
+                    <p><b>Nombre:</b> ${d.nombre}</p>
+                    <p><b>Estado:</b> <span style="color:${color}; font-weight:bold;">${d.estado}</span></p>
+                    <p><b>Nota:</b> ${d.notaInduccion}/100</p>
+                    <img src="${d.fotoCI}" style="width:100%; border-radius:5px; border:1px solid #eee;">
+                </div>
+            `;
+        });
+    }
+</script>
+
+</body>
+</html>
