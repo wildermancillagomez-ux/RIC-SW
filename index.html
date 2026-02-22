@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RIC-SW | Gestión de Seguridad</title>
+    <title>RIC-SW | Gestión Profesional</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
@@ -25,7 +26,6 @@
         .modulo { background: white; border: 2px solid #ddd; text-align: left; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 15px; border-radius: 8px; }
         #canvas-firma { border: 2px dashed #999; background: #fff; width: 100%; border-radius: 8px; touch-action: none; }
 
-        /* Estilos Tabla Admin Mejorada */
         .admin-container { max-width: 95%; background: white; margin: 10px auto; padding: 20px; border-radius: 15px; }
         #buscador { border: 2px solid var(--rojo); margin-bottom: 15px; padding: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -34,13 +34,14 @@
         .badge { padding: 5px 8px; border-radius: 5px; color: white; font-weight: bold; text-align: center; display: inline-block; }
         .bg-aprobado { background-color: var(--verde); }
         .bg-reprobado { background-color: var(--rojo); }
+        .loading { text-align: center; color: var(--rojo); font-weight: bold; margin: 10px 0; }
     </style>
 </head>
 <body>
 
 <div id="p-registro" class="card">
     <h2>RIC-SW</h2>
-    <p style="text-align:center; color:#666;">Certificación Sinchi Wayra</p>
+    <p style="text-align:center; color:#666;">Módulo de Registro Profesional</p>
     <input type="text" id="nombre" placeholder="Nombre Completo">
     <input type="text" id="ci" placeholder="CI (Ej: 1234567 OR)">
     <select id="operacion">
@@ -51,7 +52,10 @@
     <button class="btn btn-gris" onclick="document.getElementById('fotoInput').click()">📸 TOMAR FOTO DEL C.I.</button>
     <input type="file" id="fotoInput" accept="image/*" capture="camera" style="display:none" onchange="previewFoto(this)">
     <img id="imgPre" style="width:100%; display:none; margin-top:10px; border-radius:8px;">
-    <button class="btn btn-rojo" onclick="iniciarSesion()">INGRESAR AL SISTEMA</button>
+    
+    <div id="statusCarga" class="loading hidden">Subiendo datos e imagen...</div>
+    <button id="btnIngresar" class="btn btn-rojo" onclick="iniciarSesion()">INGRESAR AL SISTEMA</button>
+    
     <p style="text-align:center; margin-top:30px;"><a href="#" onclick="verAdmin()" style="color:#ddd; font-size:11px; text-decoration:none;">Acceso Supervisor</a></p>
 </div>
 
@@ -71,21 +75,17 @@
 </div>
 
 <div id="p-admin" class="admin-container hidden">
-    <h2 style="margin-bottom:5px;">Panel de Control Wilder</h2>
+    <h2>Panel Supervisor</h2>
     <input type="text" id="buscador" onkeyup="filtrarTabla()" placeholder="🔍 Buscar por nombre o CI...">
     <button class="btn btn-gris" style="margin-bottom:15px;" onclick="location.reload()">CERRAR PANEL</button>
-    
-    <div style="overflow-x:auto; max-height: 500px;">
+    <div style="overflow-x:auto;">
         <table id="tablaReporte">
             <thead>
                 <tr>
                     <th>Nombre</th>
                     <th>CI</th>
-                    <th>Sede</th>
                     <th>Estado</th>
-                    <th>Inducción</th>
-                    <th>Altura</th>
-                    <th>Energía</th>
+                    <th>Foto</th>
                     <th>Fecha</th>
                 </tr>
             </thead>
@@ -114,21 +114,24 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyCp7opkKQzw0pf3VbQcOO7295Kz1E1zDTk",
         authDomain: "ric-sw.firebaseapp.com",
         projectId: "ric-sw",
-        storageBucket: "ric-sw.firebasestorage.app",
+        storageBucket: "ric-sw.appspot.com", // Asegúrate que coincida con tu consola
         messagingSenderId: "883694529169",
         appId: "1:883694529169:web:acbaf9645b12bbee532d30"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const storage = firebase.storage();
     
-    let userDocId = ""; let fotoBase64 = ""; let datosLocales = { ind: 0, alt: 0, ene: 0 };
+    let userDocId = ""; 
+    let fotoArchivo = null; 
+    let fotoUrlFinal = "";
+    let datosLocales = { ind: 0, alt: 0, ene: 0 };
 
-    // Lógica Firma Canvas
+    // Canvas Firma
     const canvas = document.getElementById('canvas-firma');
     const ctx = canvas.getContext('2d');
     let dibujando = false;
@@ -141,14 +144,47 @@
     canvas.addEventListener('touchend', () => dibujando = false);
     function limpiarFirma() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
-    function previewFoto(input) { const reader = new FileReader(); reader.onload = e => { fotoBase64 = e.target.result; document.getElementById('imgPre').src = fotoBase64; document.getElementById('imgPre').style.display = 'block'; }; reader.readAsDataURL(input.files[0]); }
+    function previewFoto(input) {
+        if (input.files && input.files[0]) {
+            fotoArchivo = input.files[0];
+            const reader = new FileReader();
+            reader.onload = e => { 
+                document.getElementById('imgPre').src = e.target.result; 
+                document.getElementById('imgPre').style.display = 'block'; 
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 
     async function iniciarSesion() {
-        const nom = document.getElementById('nombre').value; const ci = document.getElementById('ci').value;
-        if(!nom || !ci || !fotoBase64) return alert("Faltan datos o foto.");
-        const res = await db.collection("trabajadores").add({ nombre: nom, ci, operacion: document.getElementById('operacion').value, fotoCI: fotoBase64, fecha: new Date().toLocaleString(), notaInd:0, notaAlt:0, notaEne:0 });
-        userDocId = res.id; document.getElementById('infoUser').innerText = nom;
-        document.getElementById('p-registro').classList.add('hidden'); document.getElementById('p-menu').classList.remove('hidden');
+        const nom = document.getElementById('nombre').value; 
+        const ci = document.getElementById('ci').value;
+        if(!nom || !ci || !fotoArchivo) return alert("Completa nombre, CI y toma la foto.");
+
+        document.getElementById('statusCarga').classList.remove('hidden');
+        document.getElementById('btnIngresar').disabled = true;
+
+        try {
+            // 1. Subir foto a Storage
+            const storageRef = storage.ref(`fotos_ci/${ci}_${Date.now()}`);
+            const snapshot = await storageRef.put(fotoArchivo);
+            fotoUrlFinal = await snapshot.ref.getDownloadURL();
+
+            // 2. Guardar en Firestore
+            const res = await db.collection("trabajadores").add({
+                nombre: nom, ci: ci, operacion: document.getElementById('operacion').value,
+                fotoUrl: fotoUrlFinal, fecha: new Date().toLocaleString(),
+                notaInd: 0, notaAlt: 0, notaEne: 0
+            });
+            
+            userDocId = res.id;
+            document.getElementById('infoUser').innerText = nom;
+            document.getElementById('p-registro').classList.add('hidden');
+            document.getElementById('p-menu').classList.remove('hidden');
+        } catch (error) {
+            console.error(error);
+            alert("Error al subir. Verifica que Storage esté habilitado.");
+        }
     }
 
     function abrirModulo(id) { document.getElementById('p-menu').classList.add('hidden'); document.getElementById(id).classList.remove('hidden'); }
@@ -164,7 +200,6 @@
         if(datosLocales.ind > 0 && datosLocales.alt > 0 && datosLocales.ene > 0) document.getElementById('areaFirma').classList.remove('hidden');
     }
 
-    // Lógica Panel Admin y Filtro
     async function verAdmin() {
         const pass = prompt("Clave:");
         if(pass !== "1234") return alert("Error.");
@@ -175,16 +210,13 @@
         cuerpo.innerHTML = "";
         querySnapshot.forEach((doc) => {
             const d = doc.data();
-            const promedio = (d.notaInd + d.notaAlt + d.notaEne) / 3;
-            const estado = promedio >= 71 ? '<span class="badge bg-aprobado">APROBADO</span>' : '<span class="badge bg-reprobado">REPROBADO</span>';
+            const prom = (d.notaInd + d.notaAlt + d.notaEne) / 3;
+            const est = prom >= 71 ? '<span class="badge bg-aprobado">SI</span>' : '<span class="badge bg-reprobado">NO</span>';
             cuerpo.innerHTML += `<tr>
                 <td>${d.nombre}</td>
                 <td>${d.ci}</td>
-                <td>${d.operacion}</td>
-                <td>${estado}</td>
-                <td>${d.notaInd}</td>
-                <td>${d.notaAlt}</td>
-                <td>${d.notaEne}</td>
+                <td>${est}</td>
+                <td><a href="${d.fotoUrl}" target="_blank">VER FOTO</a></td>
                 <td>${d.fecha}</td>
             </tr>`;
         });
@@ -203,12 +235,11 @@
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
         const nom = document.getElementById('nombre').value; const ci = document.getElementById('ci').value;
         doc.setFillColor(183, 28, 28); doc.rect(0, 0, 210, 30, 'F');
-        doc.setTextColor(255, 255, 255); doc.text("CERTIFICADO OFICIAL RIC-SW", 105, 15, { align: "center" });
+        doc.setTextColor(255, 255, 255); doc.text("CERTIFICADO RIC-SW", 105, 15, { align: "center" });
         doc.setTextColor(0,0,0); doc.text(`Trabajador: ${nom}`, 20, 50); doc.text(`C.I.: ${ci}`, 20, 60);
-        if(fotoBase64) doc.addImage(fotoBase64, 'JPEG', 150, 40, 40, 30);
         const firmaData = canvas.toDataURL('image/png');
         doc.addImage(firmaData, 'PNG', 40, 150, 50, 20);
-        doc.line(40, 170, 90, 170); doc.text("FIRMA TRABAJADOR", 65, 175, { align: "center" });
+        doc.text("FIRMA TRABAJADOR", 65, 175, { align: "center" });
         doc.save(`Certificado_${ci}.pdf`);
     }
 </script>
